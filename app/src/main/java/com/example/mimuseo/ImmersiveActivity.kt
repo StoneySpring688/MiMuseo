@@ -128,6 +128,21 @@ class ImmersiveActivity : AppSystemActivity() {
               )
             },
         ),
+        // Registering Main Museum Panel
+        ComposeViewPanelRegistration(
+            R.id.main_panel,
+            composeViewCreator = { _, context ->
+              ComposeView(context).apply { setContent { com.example.mimuseo.ui.MainPanel() } }
+            },
+            settingsCreator = {
+              UIPanelSettings(
+                  shape =
+                      QuadShapeOptions(width = OPTIONS_PANEL_WIDTH, height = OPTIONS_PANEL_HEIGHT),
+                  style = PanelStyleOptions(themeResourceId = R.style.PanelAppThemeTransparent),
+                  display = DpPerMeterDisplayOptions(),
+              )
+            },
+        ),
     )
   }
 

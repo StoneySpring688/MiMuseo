@@ -49,7 +49,7 @@
   <uses-permission android:name="com.oculus.permission.RENDER_MODEL" />
   <!-- Volume Control -->
   <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
-  <application android:allowBackup="false" android:label="MiMuseo">
+  <application android:allowBackup="false" android:label="MiMuseo" android:theme="@android:style/Theme.Material.Light.NoActionBar">
     <meta-data
       android:name="com.oculus.supportedDevices"
       android:value="quest2|questpro|quest3"
@@ -59,6 +59,33 @@
       android:value="V2.0"
     />
     <meta-data android:name="com.oculus.vr.focusaware" android:value="true" />
+
+    <!-- Main 2D Activity - Panel estándar de Android -->
+    <activity
+      android:name="com.example.mimuseo.MainActivity"
+      android:launchMode="singleTask"
+      android:excludeFromRecents="false"
+      android:configChanges="screenSize|screenLayout|orientation|keyboardHidden|keyboard|navigation|uiMode"
+      android:exported="true"
+      android:resizeableActivity="true"
+    >
+      <!-- Configuración de tamaño de ventana -->
+      <layout
+        android:defaultWidth="700dp"
+        android:defaultHeight="850dp"
+        android:minWidth="350dp"
+        android:minHeight="450dp"
+        android:maxWidth="900dp"
+        android:maxHeight="1200dp"
+        android:gravity="center" />
+      <!-- This filter lets the apk show up as a launchable icon. -->
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+      </intent-filter>
+    </activity>
+
+    <!-- Immersive VR Activity - Experiencia inmersiva (opcional) -->
     <activity
       android:name="com.example.mimuseo.ImmersiveActivity"
       android:launchMode="singleTask"
@@ -66,11 +93,9 @@
       android:configChanges="screenSize|screenLayout|orientation|keyboardHidden|keyboard|navigation|uiMode"
       android:exported="true"
     >
-      <!-- This filter lets the apk show up as a launchable icon. -->
       <intent-filter>
         <action android:name="android.intent.action.MAIN" />
         <category android:name="com.oculus.intent.category.VR" />
-        <category android:name="android.intent.category.LAUNCHER" />
       </intent-filter>
     </activity>
   </application>

@@ -37,7 +37,7 @@ entities:
         com.meta.spatial.toolkit.Grabbable:
           {}
         com.meta.spatial.toolkit.Panel:
-          panel: "@id/ui_example"
+          panel: "@id/main_panel"
         com.meta.spatial.toolkit.PanelDimensions:
           {}
       tag: WebviewPanel
