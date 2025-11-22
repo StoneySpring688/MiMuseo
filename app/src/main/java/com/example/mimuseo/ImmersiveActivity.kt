@@ -7,6 +7,8 @@ import android.webkit.WebView
 import android.widget.TextView
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.net.toUri
+import com.example.mimuseo.components.WristAttached
+import com.example.mimuseo.components.WristAttachedSystem
 import com.meta.spatial.castinputforward.CastInputForwardFeature
 import com.meta.spatial.compose.ComposeFeature
 import com.meta.spatial.compose.ComposeViewPanelRegistration
@@ -30,8 +32,13 @@ import com.meta.spatial.toolkit.QuadShapeOptions
 import com.meta.spatial.toolkit.UIPanelSettings
 import com.meta.spatial.vr.LocomotionSystem
 import com.meta.spatial.vr.VRFeature
+
 import com.example.mimuseo.ui.MAIN_PANEL_HEIGHT
 import com.example.mimuseo.ui.MAIN_PANEL_WIDTH
+import com.meta.spatial.core.Entity
+import com.meta.spatial.core.Pose
+import com.meta.spatial.toolkit.Panel
+import com.meta.spatial.toolkit.Transform
 import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -71,6 +78,9 @@ class ImmersiveActivity : AppSystemActivity() {
     systemManager.findSystem<LocomotionSystem>().enableLocomotion(false)
     scene.enablePassthrough(true)
 
+      componentManager.registerComponent<WristAttached>(WristAttached.Companion)
+      systemManager.registerSystem(WristAttachedSystem())
+
     loadGLXF()
   }
 
@@ -86,6 +96,15 @@ class ImmersiveActivity : AppSystemActivity() {
     scene.updateIBLEnvironment("environment.env")
 
     scene.setViewOrigin(0.0f, 0.0f, 2.0f, 180.0f)
+
+      val entity = Entity.create(
+          listOf(
+              Transform(Pose(Vector3(0f, 1.2f, -1.5f))), // Posición (x, y, z)
+              Panel(R.id.main_panel),                // El ID que definiste en registerPanels
+              WristAttached()
+          )
+      )
+
   }
 
   fun playVideo(webviewURI: String) {
