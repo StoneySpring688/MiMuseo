@@ -27,4 +27,7 @@ data class Activo(
     fun getNombre(): String = nombre
     fun getDescripcion(): String = descripcion
     fun getCategoria(): String = categoria.key()
+    fun getImagenResId(): Int? = imagenResId
+    fun getModelo3dPath(): String? = modelo3dPath
+    fun tieneModelo3d(): Boolean = modelo3dPath != null
 }

@@ -60,31 +60,6 @@
     />
     <meta-data android:name="com.oculus.vr.focusaware" android:value="true" />
 
-    <!-- Main 2D Activity - Panel estándar de Android -->
-    <activity
-      android:name="com.example.mimuseo.MainActivity"
-      android:launchMode="singleTask"
-      android:excludeFromRecents="false"
-      android:configChanges="screenSize|screenLayout|orientation|keyboardHidden|keyboard|navigation|uiMode"
-      android:exported="true"
-      android:resizeableActivity="true"
-    >
-      <!-- Configuración de tamaño de ventana -->
-      <layout
-        android:defaultWidth="700dp"
-        android:defaultHeight="850dp"
-        android:minWidth="350dp"
-        android:minHeight="450dp"
-        android:maxWidth="900dp"
-        android:maxHeight="1200dp"
-        android:gravity="center" />
-      <!-- This filter lets the apk show up as a launchable icon. -->
-      <intent-filter>
-        <action android:name="android.intent.action.MAIN" />
-        <category android:name="android.intent.category.LAUNCHER" />
-      </intent-filter>
-    </activity>
-
     <!-- Immersive VR Activity - Experiencia inmersiva (opcional) -->
     <activity
       android:name="com.example.mimuseo.ImmersiveActivity"
@@ -96,6 +71,7 @@
       <intent-filter>
         <action android:name="android.intent.action.MAIN" />
         <category android:name="com.oculus.intent.category.VR" />
+        <category android:name="android.intent.category.LAUNCHER" />
       </intent-filter>
     </activity>
   </application>

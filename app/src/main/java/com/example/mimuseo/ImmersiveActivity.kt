@@ -30,6 +30,8 @@ import com.meta.spatial.toolkit.QuadShapeOptions
 import com.meta.spatial.toolkit.UIPanelSettings
 import com.meta.spatial.vr.LocomotionSystem
 import com.meta.spatial.vr.VRFeature
+import com.example.mimuseo.ui.MAIN_PANEL_HEIGHT
+import com.example.mimuseo.ui.MAIN_PANEL_WIDTH
 import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -96,38 +98,6 @@ class ImmersiveActivity : AppSystemActivity() {
   @OptIn(SpatialSDKExperimentalAPI::class)
   override fun registerPanels(): List<PanelRegistration> {
     return listOf(
-        // Registering light-weight Views panel
-        LayoutXMLPanelRegistration(
-            R.id.ui_example,
-            layoutIdCreator = { _ -> R.layout.ui_example },
-            settingsCreator = { _ -> UIPanelSettings() },
-            panelSetupWithRootView = { rootView, _, _ ->
-              webView =
-                  rootView.findViewById<WebView>(R.id.web_view) ?: return@LayoutXMLPanelRegistration
-              textView =
-                  rootView.findViewById<TextView>(R.id.text_view)
-                      ?: return@LayoutXMLPanelRegistration
-              val webSettings = webView.settings
-              @SuppressLint("SetJavaScriptEnabled")
-              webSettings.javaScriptEnabled = true
-              webSettings.mediaPlaybackRequiresUserGesture = false
-            },
-        ),
-        // Registering a Compose panel
-        ComposeViewPanelRegistration(
-            R.id.options_panel,
-            composeViewCreator = { _, context ->
-              ComposeView(context).apply { setContent { OptionsPanel(::playVideo) } }
-            },
-            settingsCreator = {
-              UIPanelSettings(
-                  shape =
-                      QuadShapeOptions(width = OPTIONS_PANEL_WIDTH, height = OPTIONS_PANEL_HEIGHT),
-                  style = PanelStyleOptions(themeResourceId = R.style.PanelAppThemeTransparent),
-                  display = DpPerMeterDisplayOptions(),
-              )
-            },
-        ),
         // Registering Main Museum Panel
         ComposeViewPanelRegistration(
             R.id.main_panel,
@@ -137,12 +107,12 @@ class ImmersiveActivity : AppSystemActivity() {
             settingsCreator = {
               UIPanelSettings(
                   shape =
-                      QuadShapeOptions(width = OPTIONS_PANEL_WIDTH, height = OPTIONS_PANEL_HEIGHT),
+                      QuadShapeOptions(width = MAIN_PANEL_WIDTH, height = MAIN_PANEL_HEIGHT),
                   style = PanelStyleOptions(themeResourceId = R.style.PanelAppThemeTransparent),
                   display = DpPerMeterDisplayOptions(),
               )
-            },
-        ),
+            }
+        )
     )
   }
 
@@ -159,3 +129,5 @@ class ImmersiveActivity : AppSystemActivity() {
     }
   }
 }
+
+

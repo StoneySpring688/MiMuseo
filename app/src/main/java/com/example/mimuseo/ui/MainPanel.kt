@@ -4,447 +4,304 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.mimuseo.R
 import com.example.mimuseo.dominio.Activo
 import com.example.mimuseo.repositorios.RepositorioActivos
+import com.meta.spatial.toolkit.PanelConstants
+import com.meta.spatial.uiset.button.PrimaryButton
+import com.meta.spatial.uiset.theme.LocalColorScheme
+import com.meta.spatial.uiset.theme.SpatialTheme
 
-/**
- * Enum para definir el tamaño del panel
- */
-enum class PanelSize {
-    SMALL,   // < 550dp ancho (mínimo 350dp - muestra 2 cards)
-    MEDIUM,  // 550-800dp ancho (muestra 3-4 cards)
-    LARGE    // > 800dp ancho (hasta 900dp máx - muestra 4+ cards)
-}
+const val MAIN_PANEL_WIDTH = 1.2f
+const val MAIN_PANEL_HEIGHT = 0.9f
 
-/**
- * Data class para configuración responsive
- */
-data class ResponsiveConfig(
-    val panelSize: PanelSize,
-    val cardWidth: Dp,
-    val cardHeight: Dp,
-    val showCardTitle: Boolean,
-    val headerFontSize: Int,
-    val categoryFontSize: Int,
-    val padding: Dp,
-    val spacing: Dp
-)
-
-/**
- * Calcula la configuración responsive basada en el ancho disponible
- */
-fun calculateResponsiveConfig(width: Dp): ResponsiveConfig {
-    return when {
-        width < 550.dp -> ResponsiveConfig(
-            panelSize = PanelSize.SMALL,
-            cardWidth = 140.dp,
-            cardHeight = 140.dp,
-            showCardTitle = false,
-            headerFontSize = 20,
-            categoryFontSize = 16,
-            padding = 12.dp,
-            spacing = 12.dp
-        )
-        width < 800.dp -> ResponsiveConfig(
-            panelSize = PanelSize.MEDIUM,
-            cardWidth = 180.dp,
-            cardHeight = 200.dp,
-            showCardTitle = true,
-            headerFontSize = 26,
-            categoryFontSize = 20,
-            padding = 18.dp,
-            spacing = 14.dp
-        )
-        else -> ResponsiveConfig(
-            panelSize = PanelSize.LARGE,
-            cardWidth = 220.dp,
-            cardHeight = 240.dp,
-            showCardTitle = true,
-            headerFontSize = 32,
-            categoryFontSize = 24,
-            padding = 24.dp,
-            spacing = 16.dp
-        )
-    }
-}
-
-/**
- * Panel principal que muestra los activos del museo organizados por categorías.
- *
- * @param modifier Modificador para personalizar el layout
- * @param availableWidth Ancho disponible para el panel
- * @param availableHeight Alto disponible para el panel
- */
 @Composable
-fun MainPanel(
-    modifier: Modifier = Modifier,
-    availableWidth: Dp = 800.dp,
-    availableHeight: Dp = 1000.dp
-) {
-    // Estado para controlar qué activo está seleccionado
+@Preview(
+    widthDp = (PanelConstants.DEFAULT_DP_PER_METER * MAIN_PANEL_WIDTH).toInt(),
+    heightDp = (PanelConstants.DEFAULT_DP_PER_METER * MAIN_PANEL_HEIGHT).toInt(),
+)
+fun MainPanelPreview() {
+    MainPanel()
+}
+
+@Composable
+fun MainPanel() {
+    // Estado para el activo seleccionado
     var activoSeleccionado by remember { mutableStateOf<Activo?>(null) }
 
-    // Obtenemos los activos agrupados por categoría
+    // Cargar datos del repositorio
     val activosPorCategoria = remember { RepositorioActivos.obtenerActivosAgrupadosPorCategoria() }
 
-    // Configuración responsive
-    val config = remember(availableWidth) { calculateResponsiveConfig(availableWidth) }
-
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-    ) {
-        if (activoSeleccionado == null) {
-            // Vista principal: muestra categorías y activos
-            VistaPrincipal(
-                activosPorCategoria = activosPorCategoria,
-                onActivoClick = { activo -> activoSeleccionado = activo },
-                config = config
-            )
-        } else {
-            // Vista de detalle: muestra el activo seleccionado
-            VistaDetalleActivo(
-                activo = activoSeleccionado!!,
-                onVolverClick = { activoSeleccionado = null },
-                config = config
-            )
-        }
-    }
-}
-
-/**
- * Vista principal que muestra el header y las categorías con sus activos
- */
-@Composable
-private fun VistaPrincipal(
-    activosPorCategoria: Map<String, List<Activo>>,
-    onActivoClick: (Activo) -> Unit,
-    config: ResponsiveConfig
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(config.padding)
-    ) {
-        // Header
-        HeaderPanel(config)
-
-        Spacer(modifier = Modifier.height(config.spacing))
-
-        // Contenido con scroll vertical
-        Column(
+    SpatialTheme(colorScheme = getPanelTheme()) {
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(config.spacing)
+                .clip(SpatialTheme.shapes.large)
+                .background(brush = LocalColorScheme.current.panel)
         ) {
-            // Iteramos sobre cada categoría
-            activosPorCategoria.forEach { (categoria, activos) ->
-                CategoriaSeccion(
-                    nombreCategoria = categoria,
-                    activos = activos,
-                    onActivoClick = onActivoClick,
-                    config = config
+            if (activoSeleccionado == null) {
+                // Vista principal: muestra categorías y activos
+                MainPanelContent(
+                    activosPorCategoria = activosPorCategoria,
+                    onActivoClick = { activo -> activoSeleccionado = activo }
+                )
+            } else {
+                // Vista de detalle: muestra el activo seleccionado
+                ActivoDetalleView(
+                    activo = activoSeleccionado!!,
+                    onBackClick = { activoSeleccionado = null }
                 )
             }
         }
     }
 }
 
-/**
- * Header del panel con el título "Mi Museo"
- */
 @Composable
-private fun HeaderPanel(config: ResponsiveConfig) {
-    Box(
+private fun MainPanelContent(
+    activosPorCategoria: Map<String, List<Activo>>,
+    onActivoClick: (Activo) -> Unit
+) {
+    Column(
         modifier = Modifier
-            .fillMaxWidth()
-            .background(
-                color = Color(0xFF2C3E50),
-                shape = RoundedCornerShape(12.dp)
-            )
-            .padding(vertical = config.padding, horizontal = config.padding),
-        contentAlignment = Alignment.Center
+            .fillMaxSize()
+            .padding(24.dp)
     ) {
+        // Header
         Text(
             text = "Mi Museo",
-            fontSize = config.headerFontSize.sp,
+            fontSize = 32.sp,
             fontWeight = FontWeight.Bold,
             color = Color.White,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 24.dp),
             textAlign = TextAlign.Center
         )
+
+        // Columna con categorías
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(20.dp),
+            modifier = Modifier.fillMaxSize()
+        ) {
+            items(activosPorCategoria.entries.toList()) { (categoria, activos) ->
+                CategoriaSection(
+                    categoria = categoria,
+                    activos = activos,
+                    onActivoClick = onActivoClick
+                )
+            }
+        }
     }
 }
 
-/**
- * Sección de una categoría con su lista horizontal de activos
- */
 @Composable
-private fun CategoriaSeccion(
-    nombreCategoria: String,
+private fun CategoriaSection(
+    categoria: String,
     activos: List<Activo>,
-    onActivoClick: (Activo) -> Unit,
-    config: ResponsiveConfig
+    onActivoClick: (Activo) -> Unit
 ) {
     Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(config.spacing)
+        modifier = Modifier.fillMaxWidth()
     ) {
         // Título de la categoría
         Text(
-            text = nombreCategoria,
-            fontSize = config.categoryFontSize.sp,
+            text = categoria,
+            fontSize = 24.sp,
             fontWeight = FontWeight.SemiBold,
-            color = Color(0xFF34495E),
-            modifier = Modifier.padding(start = 8.dp)
+            color = Color.White,
+            modifier = Modifier.padding(bottom = 12.dp)
         )
 
-        // Lista horizontal de activos
+        // Fila horizontal desplazable con los activos
         LazyRow(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(horizontal = 8.dp)
+            modifier = Modifier.fillMaxWidth()
         ) {
             items(activos) { activo ->
-                TarjetaActivo(
+                ActivoCard(
                     activo = activo,
-                    onClick = { onActivoClick(activo) },
-                    config = config
+                    onClick = { onActivoClick(activo) }
                 )
             }
         }
     }
 }
 
-/**
- * Tarjeta individual de un activo en la vista de categoría
- */
 @Composable
-private fun TarjetaActivo(
+private fun ActivoCard(
     activo: Activo,
-    onClick: () -> Unit,
-    config: ResponsiveConfig
+    onClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
-            .width(config.cardWidth)
-            .height(config.cardHeight)
+            .width(180.dp)
+            .height(220.dp)
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
+            containerColor = Color.White.copy(alpha = 0.1f)
         )
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(12.dp),
-            verticalArrangement = if (config.showCardTitle) Arrangement.SpaceBetween else Arrangement.Center
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Imagen del activo
-            Box(
+            Image(
+                painter = painterResource(id = R.drawable.mimuseoplaceholder),
+                contentDescription = activo.getNombre(),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(if (config.showCardTitle) 1f else 1f)
-                    .background(
-                        color = Color(0xFFECF0F1),
-                        shape = RoundedCornerShape(8.dp)
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.mimuseoplaceholder),
-                    contentDescription = "Imagen de ${activo.getNombre()}",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-            }
+                    .height(140.dp)
+                    .clip(RoundedCornerShape(8.dp)),
+                contentScale = ContentScale.Crop
+            )
 
-            // Mostrar título solo si la configuración lo permite
-            if (config.showCardTitle) {
-                Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-                Text(
-                    text = activo.getNombre(),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color(0xFF2C3E50),
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+            // Nombre del activo
+            Text(
+                text = activo.getNombre(),
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color.White,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }
 
-/**
- * Vista de detalle de un activo seleccionado
- */
 @Composable
-private fun VistaDetalleActivo(
+private fun ActivoDetalleView(
     activo: Activo,
-    onVolverClick: () -> Unit,
-    config: ResponsiveConfig
+    onBackClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(config.padding)
-            .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(config.spacing)
+            .padding(32.dp)
     ) {
-        // Botón para volver
-        Button(
-            onClick = onVolverClick,
-            modifier = Modifier.align(Alignment.Start),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary
-            )
-        ) {
-            Text("← Volver")
-        }
-
-        // Título del activo (ajustar tamaño según config)
-        Text(
-            text = activo.getNombre(),
-            fontSize = if (config.panelSize == PanelSize.SMALL) 24.sp else 32.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF2C3E50),
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        // Imagen grande del activo
-        Card(
+        // Botón de retroceso
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(if (config.panelSize == PanelSize.SMALL) 200.dp else 300.dp),
-            shape = RoundedCornerShape(16.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                .padding(bottom = 16.dp),
+            horizontalArrangement = Arrangement.Start
         ) {
-            Box(
+            PrimaryButton(
+                label = "← Volver",
+                onClick = onBackClick
+            )
+        }
+
+        // Contenido del detalle
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            horizontalArrangement = Arrangement.spacedBy(24.dp)
+        ) {
+            // Imagen grande a la izquierda
+            Card(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color(0xFFECF0F1)),
-                contentAlignment = Alignment.Center
+                    .weight(1f)
+                    .fillMaxHeight(),
+                shape = RoundedCornerShape(16.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.mimuseoplaceholder),
-                    contentDescription = "Imagen grande de ${activo.getNombre()}",
+                    contentDescription = activo.getNombre(),
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Fit
                 )
             }
-        }
 
-        // Categoría
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = Color(0xFF3498DB).copy(alpha = 0.1f)
-            )
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(config.padding),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Categoría:",
-                    fontSize = if (config.panelSize == PanelSize.SMALL) 14.sp else 18.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF2C3E50)
-                )
-                Text(
-                    text = activo.getCategoria(),
-                    fontSize = if (config.panelSize == PanelSize.SMALL) 14.sp else 18.sp,
-                    fontWeight = FontWeight.Normal,
-                    color = Color(0xFF3498DB)
-                )
-            }
-        }
-
-        // Descripción
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = Color.White
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-        ) {
+            // Información a la derecha
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(config.padding),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                    .weight(1f)
+                    .fillMaxHeight(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                // Título
                 Text(
-                    text = "Descripción:",
-                    fontSize = if (config.panelSize == PanelSize.SMALL) 16.sp else 20.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF2C3E50)
+                    text = activo.getNombre(),
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
                 )
-                Text(
-                    text = activo.getDescripcion(),
-                    fontSize = if (config.panelSize == PanelSize.SMALL) 14.sp else 16.sp,
-                    fontWeight = FontWeight.Normal,
-                    color = Color(0xFF7F8C8D),
-                    lineHeight = if (config.panelSize == PanelSize.SMALL) 20.sp else 24.sp
-                )
-            }
-        }
 
-        // Botón para ver modelo 3D
-        Button(
-            onClick = { /* TODO: Implementar visualización de modelo 3D */ },
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary
-            )
-        ) {
-            Text("Ver Modelo 3D")
+                // Categoría
+                Text(
+                    text = "Categoría: ${activo.getCategoria()}",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.White.copy(alpha = 0.8f)
+                )
+
+                // Descripción
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.White.copy(alpha = 0.1f)
+                    )
+                ) {
+                    Text(
+                        text = activo.getDescripcion(),
+                        fontSize = 16.sp,
+                        color = Color.White,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                        lineHeight = 24.sp
+                    )
+                }
+
+                // Botón para ver modelo 3D (solo si está disponible)
+                if (activo.tieneModelo3d()) {
+                    PrimaryButton(
+                        label = "Ver Modelo 3D",
+                        expanded = true,
+                        onClick = { /* TODO: Implementar visualización de modelo 3D */ }
+                    )
+                }
+            }
         }
     }
 }
 
-/**
- * Función auxiliar para refrescar los datos del panel
- * Puede ser llamada cuando se añaden nuevos activos al repositorio
- */
-fun actualizarPanel() {
-    // Esta función puede ser expandida en el futuro para forzar
-    // una recomposición cuando los datos cambien externamente
-    RepositorioActivos.obtenerActivosAgrupadosPorCategoria()
-}
+@Composable
+private fun getPanelTheme() =
+    if (androidx.compose.foundation.isSystemInDarkTheme())
+        com.meta.spatial.uiset.theme.darkSpatialColorScheme()
+    else
+        com.meta.spatial.uiset.theme.lightSpatialColorScheme()
 
