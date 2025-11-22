@@ -1,9 +1,11 @@
 // (c) Meta Platforms, Inc. and affiliates. Confidential and proprietary.
 
 package com.example.mimuseo.components
-
+/*
+Importar los generated a partir del schema
 import com.example.mimuseo.HandSide
 import com.example.mimuseo.WristAttached
+ */
 import com.example.mimuseo.components.MathUtils.fromSequentialPYR
 import com.meta.spatial.core.Entity
 import com.meta.spatial.core.Pose
