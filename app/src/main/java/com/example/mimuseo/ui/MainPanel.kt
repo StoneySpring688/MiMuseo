@@ -45,7 +45,8 @@ fun MainPanelPreview() {
 }
 
 @Composable
-fun MainPanel() {
+fun MainPanel(onShow3DModel: (String) -> Unit = {}) {
+
     // Estado para el activo seleccionado
     var activoSeleccionado by remember { mutableStateOf<Activo?>(null) }
 
@@ -69,7 +70,8 @@ fun MainPanel() {
                 // Vista de detalle: muestra el activo seleccionado
                 ActivoDetalleView(
                     activo = activoSeleccionado!!,
-                    onBackClick = { activoSeleccionado = null }
+                    onBackClick = { activoSeleccionado = null },
+                    onShow3DModel = onShow3DModel
                 )
             }
         }
@@ -200,7 +202,8 @@ private fun ActivoCard(
 @Composable
 private fun ActivoDetalleView(
     activo: Activo,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onShow3DModel: (String) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -290,7 +293,11 @@ private fun ActivoDetalleView(
                     PrimaryButton(
                         label = "Ver Modelo 3D",
                         expanded = true,
-                        onClick = { /* TODO: Implementar visualización de modelo 3D */ }
+                        onClick = {
+                            activo.getModelo3dPath()?.let { path ->
+                                onShow3DModel(path)
+                            }
+                        }
                     )
                 }
             }

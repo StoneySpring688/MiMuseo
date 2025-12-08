@@ -33,6 +33,9 @@ import com.meta.spatial.toolkit.UIPanelSettings
 import com.meta.spatial.vr.LocomotionSystem
 import com.meta.spatial.vr.VRFeature
 
+import android.net.Uri
+import com.meta.spatial.toolkit.Mesh
+
 import com.example.mimuseo.ui.MAIN_PANEL_HEIGHT
 import com.example.mimuseo.ui.MAIN_PANEL_WIDTH
 import com.example.mimuseo.ui.MainPanel
@@ -44,7 +47,9 @@ import com.meta.spatial.core.Query
 import com.meta.spatial.toolkit.Followable
 import com.meta.spatial.toolkit.FollowableSystem
 import com.meta.spatial.toolkit.Panel
+import com.meta.spatial.toolkit.Scale
 import com.meta.spatial.toolkit.Transform
+import com.meta.spatial.toolkit.TransformParent
 import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -59,6 +64,8 @@ class ImmersiveActivity : AppSystemActivity() {
     private var mainPanelEntity: Entity? = null
     private val WRIST_MENU_PANEL_ID = R.id.wrist_menu_panel
     val WRIST_BUTTON_SIZE = 0.08f
+
+    private var current3DModelEntity: Entity? = null
 
   lateinit var textView: TextView
   lateinit var webView: WebView
@@ -111,12 +118,25 @@ class ImmersiveActivity : AppSystemActivity() {
 
   }
 
-  fun playVideo(webviewURI: String) {
-    textView.visibility = View.GONE
-    webView.visibility = View.VISIBLE
-    val additionalHttpHeaders = mapOf("Referer" to "https://${packageName}")
-    webView.loadUrl(webviewURI, additionalHttpHeaders)
-  }
+    private fun spawn3DModel(modelPath: String) {
+        current3DModelEntity?.destroy()
+
+        val mainPanelEntity: Entity = Query.where { has(Panel.id) }
+            .eval()
+            .firstOrNull { entity ->
+                val panelComponent = entity.getComponent<Panel>()
+                panelComponent.panelRegistrationId == R.id.main_panel
+            } as Entity
+
+        current3DModelEntity = Entity.create(
+            listOf(
+                Mesh(modelPath.toUri()),
+                TransformParent(mainPanelEntity),
+                Transform(Pose(Vector3(2f, -0.5f, 0f))),
+                Scale(Vector3(3.5f, 1f, 1f))
+            )
+        )
+    }
 
   @OptIn(SpatialSDKExperimentalAPI::class)
   override fun registerPanels(): List<PanelRegistration> {
@@ -125,7 +145,7 @@ class ImmersiveActivity : AppSystemActivity() {
         ComposeViewPanelRegistration(
             R.id.main_panel,
             composeViewCreator = { _, context ->
-              ComposeView(context).apply { setContent { MainPanel() } }
+              ComposeView(context).apply { setContent { MainPanel() {path -> runOnUiThread { spawn3DModel(path) }} }}
             },
             settingsCreator = {
               UIPanelSettings(

@@ -17,7 +17,7 @@ object RepositorioActivos {
     private fun cargarDatosIniciales() {
         add(Activo(1, "Mona Lisa", "Famosa pintura de Leonardo da Vinci", Categorias.ARTE))
         add(Activo(2, "El Pensador", "Escultura de Auguste Rodin", Categorias.ARTE))
-        add(Activo(3, "Tiranosaurio Rex", "Esqueleto de dinosaurio en el museo de historia natural", Categorias.CIENCIA))
+        add(Activo(3, "Tiranosaurio Rex", "Esqueleto de dinosaurio en el museo de historia natural", Categorias.CIENCIA, modelo3dPath = "apk:///models/TyrannosaurusRex.glb"))
     }
 
     fun add(activo: Activo) {
