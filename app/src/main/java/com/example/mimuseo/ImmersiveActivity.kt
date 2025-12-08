@@ -37,8 +37,6 @@ import com.example.mimuseo.ui.MAIN_PANEL_HEIGHT
 import com.example.mimuseo.ui.MAIN_PANEL_WIDTH
 import com.example.mimuseo.ui.MainPanel
 import com.example.mimuseo.ui.WristMenuPanel
-import com.example.mimuseo.ui.WRIST_PANEL_WIDTH
-import com.example.mimuseo.ui.WRIST_PANEL_HEIGHT
 import com.meta.spatial.core.Entity
 import com.meta.spatial.core.Pose
 import com.meta.spatial.core.Quaternion
@@ -60,6 +58,7 @@ class ImmersiveActivity : AppSystemActivity() {
 
     private var mainPanelEntity: Entity? = null
     private val WRIST_MENU_PANEL_ID = R.id.wrist_menu_panel
+    val WRIST_BUTTON_SIZE = 0.08f
 
   lateinit var textView: TextView
   lateinit var webView: WebView
@@ -152,7 +151,7 @@ class ImmersiveActivity : AppSystemActivity() {
             },
             settingsCreator = {
                 UIPanelSettings(
-                    shape = QuadShapeOptions(width = WRIST_PANEL_WIDTH, height = WRIST_PANEL_HEIGHT),
+                    shape = QuadShapeOptions(width = WRIST_BUTTON_SIZE, height = WRIST_BUTTON_SIZE),
                     // Usamos transparente para que se vea nuestro fondo custom (Box con alpha)
                     style = PanelStyleOptions(themeResourceId = R.style.PanelAppThemeTransparent),
                     display = DpPerMeterDisplayOptions(),

@@ -33,7 +33,7 @@ entities:
             - -1.70000005
           componentVersion: 1
         com.meta.components.Visibility:
-          visible: true
+          {}
         com.meta.spatial.toolkit.Panel:
           panel: "@id/main_panel"
         com.meta.spatial.toolkit.PanelDimensions:
@@ -59,8 +59,8 @@ entities:
         com.meta.components.SceneNode:
           rotation.format: Euler
           scale:
-            - 0.0399999991
-            - 0.0399999991
+            - 0.0500000007
+            - 0.0500000007
             - 1
           componentVersion: 1
         com.meta.components.Visibility:
