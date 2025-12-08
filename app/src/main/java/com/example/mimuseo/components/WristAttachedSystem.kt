@@ -17,6 +17,9 @@ import com.meta.spatial.toolkit.AvatarBody
 import com.meta.spatial.toolkit.Transform
 import com.meta.spatial.toolkit.Visible
 
+import  com.example.mimuseo.WristAttached
+import  com.example.mimuseo.HandSide
+
 /**
  * Manages entities that are designated to be attached to the user's wrists, responsible for
  * updating the position, rotation, and visibility of such entities based on the user's hand and

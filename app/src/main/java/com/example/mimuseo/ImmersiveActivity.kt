@@ -7,7 +7,6 @@ import android.webkit.WebView
 import android.widget.TextView
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.net.toUri
-import com.example.mimuseo.components.WristAttached
 import com.example.mimuseo.components.WristAttachedSystem
 import com.meta.spatial.castinputforward.CastInputForwardFeature
 import com.meta.spatial.compose.ComposeFeature
@@ -97,13 +96,12 @@ class ImmersiveActivity : AppSystemActivity() {
 
     scene.setViewOrigin(0.0f, 0.0f, 2.0f, 180.0f)
 
-      val entity = Entity.create(
+      /*val entity = Entity.create(
           listOf(
               Transform(Pose(Vector3(0f, 1.2f, -1.5f))), // Posición (x, y, z)
-              Panel(R.id.main_panel),                // El ID que definiste en registerPanels
-              WristAttached()
+              Panel(R.id.main_panel)                // El ID que definiste en registerPanels
           )
-      )
+      )*/
 
   }
 
