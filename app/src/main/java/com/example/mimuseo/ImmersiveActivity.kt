@@ -8,6 +8,7 @@ import android.widget.TextView
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.net.toUri
 import com.example.mimuseo.components.WristAttachedSystem
+import com.example.mimuseo.WristAttached
 import com.meta.spatial.castinputforward.CastInputForwardFeature
 import com.meta.spatial.compose.ComposeFeature
 import com.meta.spatial.compose.ComposeViewPanelRegistration
@@ -17,7 +18,7 @@ import com.meta.spatial.core.SpatialSDKExperimentalAPI
 import com.meta.spatial.core.Vector3
 import com.meta.spatial.datamodelinspector.DataModelInspectorFeature
 import com.meta.spatial.debugtools.HotReloadFeature
-import com.meta.spatial.isdk.IsdkFeature
+//import com.meta.spatial.isdk.IsdkFeature
 import com.meta.spatial.okhttp3.OkHttpAssetFetcher
 import com.meta.spatial.ovrmetrics.OVRMetricsDataModel
 import com.meta.spatial.ovrmetrics.OVRMetricsFeature
@@ -34,8 +35,16 @@ import com.meta.spatial.vr.VRFeature
 
 import com.example.mimuseo.ui.MAIN_PANEL_HEIGHT
 import com.example.mimuseo.ui.MAIN_PANEL_WIDTH
+import com.example.mimuseo.ui.MainPanel
+import com.example.mimuseo.ui.WristMenuPanel
+import com.example.mimuseo.ui.WRIST_PANEL_WIDTH
+import com.example.mimuseo.ui.WRIST_PANEL_HEIGHT
 import com.meta.spatial.core.Entity
 import com.meta.spatial.core.Pose
+import com.meta.spatial.core.Quaternion
+import com.meta.spatial.core.Query
+import com.meta.spatial.toolkit.Followable
+import com.meta.spatial.toolkit.FollowableSystem
 import com.meta.spatial.toolkit.Panel
 import com.meta.spatial.toolkit.Transform
 import java.io.File
@@ -43,9 +52,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlin.io.normalize
+import kotlin.times
 
 class ImmersiveActivity : AppSystemActivity() {
   private val activityScope = CoroutineScope(Dispatchers.Main)
+
+    private var mainPanelEntity: Entity? = null
+    private val WRIST_MENU_PANEL_ID = R.id.wrist_menu_panel
 
   lateinit var textView: TextView
   lateinit var webView: WebView
@@ -55,15 +69,15 @@ class ImmersiveActivity : AppSystemActivity() {
         mutableListOf<SpatialFeature>(
             VRFeature(this),
             ComposeFeature(),
-            IsdkFeature(this, spatial, systemManager),
+            //IsdkFeature(this, spatial, systemManager),
         )
     if (BuildConfig.DEBUG) {
       features.add(CastInputForwardFeature(this))
       features.add(HotReloadFeature(this))
       features.add(OVRMetricsFeature(this, OVRMetricsDataModel() { numberOfMeshes() }))
-      features.add(DataModelInspectorFeature(spatial, this.componentManager))
     }
-    return features
+      features.add(DataModelInspectorFeature(spatial, this.componentManager))
+      return features
   }
 
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -77,7 +91,7 @@ class ImmersiveActivity : AppSystemActivity() {
     systemManager.findSystem<LocomotionSystem>().enableLocomotion(false)
     scene.enablePassthrough(true)
 
-      componentManager.registerComponent<WristAttached>(WristAttached.Companion)
+      componentManager.registerComponent<WristAttached>(WristAttached)
       systemManager.registerSystem(WristAttachedSystem())
 
     loadGLXF()
@@ -96,13 +110,6 @@ class ImmersiveActivity : AppSystemActivity() {
 
     scene.setViewOrigin(0.0f, 0.0f, 2.0f, 180.0f)
 
-      /*val entity = Entity.create(
-          listOf(
-              Transform(Pose(Vector3(0f, 1.2f, -1.5f))), // Posición (x, y, z)
-              Panel(R.id.main_panel)                // El ID que definiste en registerPanels
-          )
-      )*/
-
   }
 
   fun playVideo(webviewURI: String) {
@@ -119,7 +126,7 @@ class ImmersiveActivity : AppSystemActivity() {
         ComposeViewPanelRegistration(
             R.id.main_panel,
             composeViewCreator = { _, context ->
-              ComposeView(context).apply { setContent { com.example.mimuseo.ui.MainPanel() } }
+              ComposeView(context).apply { setContent { MainPanel() } }
             },
             settingsCreator = {
               UIPanelSettings(
@@ -129,11 +136,62 @@ class ImmersiveActivity : AppSystemActivity() {
                   display = DpPerMeterDisplayOptions(),
               )
             }
+        ),
+        ComposeViewPanelRegistration(
+            WRIST_MENU_PANEL_ID,
+            composeViewCreator = { _, context ->
+                ComposeView(context).apply {
+                    setContent {
+                        // Pasamos la acción al botón
+                        WristMenuPanel() {
+                            // Importante: Ejecutar en el hilo principal si tocamos UI o corrutinas de escena
+                            runOnUiThread { showOrMoveMainPanel() }
+                        }
+                    }
+                }
+            },
+            settingsCreator = {
+                UIPanelSettings(
+                    shape = QuadShapeOptions(width = WRIST_PANEL_WIDTH, height = WRIST_PANEL_HEIGHT),
+                    // Usamos transparente para que se vea nuestro fondo custom (Box con alpha)
+                    style = PanelStyleOptions(themeResourceId = R.style.PanelAppThemeTransparent),
+                    display = DpPerMeterDisplayOptions(),
+                )
+            }
         )
     )
   }
 
-  override fun onSpatialShutdown() {
+    private fun showOrMoveMainPanel() {
+        val locomotionSystem = systemManager.findSystem<LocomotionSystem>()
+        val headPose = locomotionSystem.getScene().getViewerPose()
+
+        val forwardDirection = headPose.q * Vector3(0f, 0f, 0.6f)
+
+        val targetPosition = (headPose.t * Vector3(1f,1f,1f)) + forwardDirection
+
+        val panelRotation = headPose.q * Quaternion(1f, 1f, 0f)
+
+        val mainPanelEntity = Query.where { has(Panel.id) }
+            .eval()
+            .firstOrNull { entity ->
+                val panelComponent = entity.getComponent<Panel>()
+                panelComponent.panelRegistrationId == R.id.main_panel
+            }
+
+        if (mainPanelEntity != null) {
+            // Actualizar posición y rotación
+            mainPanelEntity.setComponent(Transform(Pose(targetPosition, panelRotation)))
+
+            // Asegurar que sea visible
+            mainPanelEntity.setComponent(com.meta.spatial.toolkit.Visible(true))
+        } else {
+            println("Error: No se encontró la entidad con R.id.main_panel en la escena.")
+        }
+
+    }
+
+    override fun onSpatialShutdown() {
     super.onSpatialShutdown()
   }
 
